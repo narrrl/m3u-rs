@@ -12,7 +12,7 @@ fn main() -> Result<()> {
         .version("0.1")
         .author("Nils Pukropp")
         .arg("-r... 'search recursively'")
-        .arg("-a... 'append new files to existing playlist")
+        .arg("-a... 'append new files to existing playlist'")
         .arg("<playlist name> 'name of the playlist'")
         .arg("<path> 'the path to the directory with the music files'")
         .get_matches();
