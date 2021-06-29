@@ -14,29 +14,44 @@ fn main() -> Result<()> {
         .arg("-r... 'search recursively'")
         .arg("-a... 'append new files to existing playlist'")
         .arg("<playlist name> 'name of the playlist'")
-        .arg("<path> 'the path to the directory with the music files'")
+        .arg("<path>... 'the path or multiple paths to directories with music files or just single music files'")
         .get_matches();
 
     let mut current_dir = env::current_dir()?;
 
-    let path = match matches.value_of("path") {
-        Some(path) => PathBuf::from(path),
-        None => env::current_dir()?,
+    let paths: Vec<PathBuf> = match matches.values_of("path") {
+        Some(values) => {
+            let mut paths = Vec::new();
+            for val in values {
+                paths.push(PathBuf::from(val));
+            }
+            paths
+        }
+        None => vec![env::current_dir()?],
     };
 
     let recursively = matches.is_present("r");
 
-    let path: PathBuf = match canonicalize(&path) {
-        Ok(path) => path,
-        Err(_) => {
-            return Err(Error::new(
-                ErrorKind::Other,
-                format!("Invalid path {:#?}", &path),
-            ));
-        }
-    };
+    let mut can_paths = Vec::new();
+    for path in paths {
+        let path: PathBuf = match canonicalize(&path) {
+            Ok(path) => path,
+            Err(_) => {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    format!("Invalid path {:#?}", &path),
+                ));
+            }
+        };
+        can_paths.push(path);
+    }
 
-    let songs = get_music_files(&path, recursively)?;
+    let mut songs = Vec::new();
+    for path in can_paths {
+        for song in get_music_files(&path, recursively)? {
+            songs.push(song);
+        }
+    }
 
     let playlist_name = matches
         .value_of("playlist name")
